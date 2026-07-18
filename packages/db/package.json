@@ -1,0 +1,22 @@
+{
+  "name": "@syncpad/db",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "lint": "echo 'No lint script for db package yet'"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.14.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "prisma": "^5.14.0",
+    "typescript": "^5.4.5"
+  }
+}

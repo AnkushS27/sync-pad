@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  image        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownedDocuments  Document[]              @relation("DocumentOwner")
+  collaborations  DocumentCollaborator[]
+  versionsCreated DocumentVersion[]
+  auditLogs       SyncAuditLog[]
+}
+
+model Document {
+  id             String    @id @default(cuid())
+  title          String    @default("Untitled Document")
+  ownerId        String
+  owner          User      @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Latest merged CRDT state (compacted). Never included in list queries.
+  docState       Bytes?
+  stateSizeBytes Int       @default(0)
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastSyncedAt   DateTime?
+
+  collaborators  DocumentCollaborator[]
+  versions       DocumentVersion[]
+  auditLogs      SyncAuditLog[]
+
+  @@index([ownerId])
+}
+
+model DocumentCollaborator {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @default(VIEWER)
+  invitedAt  DateTime @default(now())
+
+  @@unique([documentId, userId])
+  @@index([userId])
+}
+
+model DocumentVersion {
+  id          String   @id @default(cuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  label       String?
+  snapshot    Bytes    // Y.encodeStateAsUpdate at time of capture
+  stateVector Bytes    // Y.encodeStateVector at time of capture
+  sizeBytes   Int
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  isAutoSave  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([documentId, createdAt])
+}
+
+model SyncAuditLog {
+  id               String   @id @default(cuid())
+  documentId       String
+  document         Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id])
+  eventType        String   // "connect" | "disconnect" | "update_applied" | "update_rejected" | "restore"
+  payloadSizeBytes Int?
+  reason           String?
+  createdAt        DateTime @default(now())
+
+  @@index([documentId, createdAt])
+}

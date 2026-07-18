@@ -1,0 +1,31 @@
+{
+  "name": "@syncpad/monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "build": "pnpm -r run build",
+    "db:migrate": "pnpm --filter @syncpad/db run migrate",
+    "db:studio": "pnpm --filter @syncpad/db run studio",
+    "db:generate": "pnpm --filter @syncpad/db run generate",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
+}

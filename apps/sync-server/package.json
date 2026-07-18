@@ -1,0 +1,29 @@
+{
+  "name": "@syncpad/sync-server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "lint": "echo 'No lint script for sync-server package yet'"
+  },
+  "dependencies": {
+    "@hocuspocus/extension-logger": "^2.13.5",
+    "@hocuspocus/extension-throttle": "^2.13.5",
+    "@hocuspocus/server": "^2.13.5",
+    "@syncpad/db": "workspace:*",
+    "@syncpad/shared": "workspace:*",
+    "jsonwebtoken": "^9.0.2",
+    "ws": "^8.17.0",
+    "yjs": "^13.6.15"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^20.12.12",
+    "@types/ws": "^8.5.10",
+    "tsx": "^4.10.5",
+    "typescript": "^5.4.5"
+  }
+}
