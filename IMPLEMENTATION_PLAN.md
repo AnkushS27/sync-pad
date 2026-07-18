@@ -269,10 +269,10 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] Can register a new user, get redirected to login, log in, and land on an authenticated page.
-- [ ] Visiting an `(app)/` route unauthenticated redirects to `/login`.
-- [ ] Directly `curl`-ing a protected API route with no session cookie returns 401, even if you comment out `proxy.ts` entirely (this is the test that proves defense-in-depth, not just middleware, is doing the work).
-- [ ] Passwords are never stored or logged in plaintext; verify via DB inspection.
+- [x] Can register a new user, get redirected to login, log in, and land on an authenticated page.
+- [x] Visiting an `(app)/` route unauthenticated redirects to `/login`.
+- [x] Directly `curl`-ing a protected API route with no session cookie returns 401, even if you comment out `proxy.ts` entirely (this is the test that proves defense-in-depth, not just middleware, is doing the work).
+- [x] Passwords are never stored or logged in plaintext; verify via DB inspection.
 
 ---
 
