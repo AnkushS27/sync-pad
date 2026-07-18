@@ -216,11 +216,11 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] `pnpm install` succeeds from repo root.
-- [ ] `pnpm --filter web dev` (in one terminal) boots a default Next.js page.
-- [ ] `pnpm --filter sync-server dev` (in a second terminal) boots a "hello" TS process with no errors, independently of whether `web` is running.
-- [ ] `pnpm lint` and `pnpm typecheck` (the root scripts from step 2) run across all workspaces from root with zero errors.
-- [ ] Husky pre-commit hook actually fires on a test commit.
+- [x] `pnpm install` succeeds from repo root.
+- [x] `pnpm --filter web dev` (in one terminal) boots a default Next.js page.
+- [x] `pnpm --filter sync-server dev` (in a second terminal) boots a "hello" TS process with no errors, independently of whether `web` is running.
+- [x] `pnpm lint` and `pnpm typecheck` (the root scripts from step 2) run across all workspaces from root with zero errors.
+- [x] Husky pre-commit hook actually fires on a test commit.
 
 ---
 
@@ -239,9 +239,9 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] `pnpm db:migrate` applies cleanly to a fresh database.
-- [ ] `pnpm db:studio` opens and shows all six models (User, Document, DocumentCollaborator, DocumentVersion, SyncAuditLog, plus any Auth.js-required table — see note below).
-- [ ] Both `apps/web` and `apps/sync-server` can `import { prisma } from "@syncpad/db"` and run a trivial query.
+- [x] `pnpm db:migrate` applies cleanly to a fresh database.
+- [x] `pnpm db:studio` opens and shows all six models (User, Document, DocumentCollaborator, DocumentVersion, SyncAuditLog, plus any Auth.js-required table — see note below).
+- [x] Both `apps/web` and `apps/sync-server` can `import { prisma } from "@syncpad/db"` and run a trivial query.
 
 **Notes & gotchas:**
 
