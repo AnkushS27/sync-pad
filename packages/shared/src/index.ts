@@ -17,3 +17,8 @@ export const CreateDocumentInput = z.object({
 export const UpdateDocumentInput = z.object({
   title: z.string().min(1).max(255).optional(),
 });
+
+export const InviteCollaboratorInput = z.object({
+  email: z.string().email("Invalid email address"),
+  role: RoleSchema,
+});

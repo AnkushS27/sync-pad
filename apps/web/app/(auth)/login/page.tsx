@@ -16,6 +16,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (searchParams && searchParams.get("registered") === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInfo("Account created successfully! Please sign in.");
     }
   }, [searchParams]);
@@ -36,10 +37,10 @@ function LoginForm() {
       if (result?.error) {
         setError("Invalid email or password");
       } else {
-        router.push("/dashboard-test");
+        router.push("/documents");
         router.refresh();
       }
-    } catch (err: any) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -105,7 +106,7 @@ function LoginForm() {
         </form>
 
         <div className="mt-6 text-center text-sm">
-          <span className="text-zinc-500 dark:text-zinc-400">Don't have an account? </span>
+          <span className="text-zinc-500 dark:text-zinc-400">Don&apos;t have an account? </span>
           <Link
             href="/register"
             className="font-semibold text-zinc-900 dark:text-zinc-50 hover:underline"
