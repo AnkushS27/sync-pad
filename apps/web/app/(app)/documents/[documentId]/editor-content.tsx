@@ -34,6 +34,16 @@ import { createSyncProvider } from "@/lib/sync/provider";
 import { useConnectionState } from "@/lib/sync/connection-state";
 import type { HocuspocusProvider } from "@hocuspocus/provider";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ArrowLeft,
   WifiOff,
@@ -53,6 +63,8 @@ import {
   Undo,
   Redo,
   Users,
+  Save,
+  History,
 } from "lucide-react";
 
 // ─── Presence colours ─────────────────────────────────────────────────────────
@@ -173,28 +185,41 @@ const editorStyles = `
 
   /* Collaboration caret styles */
   .collaboration-cursor__caret {
-    border-left: 1px solid;
-    border-right: 1px solid;
-    margin-left: -1px;
-    margin-right: -1px;
-    pointer-events: none;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: auto; /* enable pointer events so hover state works */
     position: relative;
     word-break: normal;
   }
-  .collaboration-cursor__label {
-    border-radius: 3px 3px 3px 0;
-    color: #0d0d0d;
-    font-size: 10px;
-    font-style: normal;
-    font-weight: 600;
-    left: -1px;
-    line-height: normal;
-    padding: 0.1rem 0.3rem;
+  .tooltip-bubble {
+    visibility: hidden;
     position: absolute;
-    top: -1.4em;
-    user-select: none;
+    color: white !important;
+    z-index: 50;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    font-size: 11px !important;
+    font-family: var(--font-sans), sans-serif !important;
+    padding: 6px 10px !important;
     white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
     pointer-events: none;
+    line-height: 1.25 !important;
+  }
+  .tooltip-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .avatar-trigger:hover .tooltip-bubble {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 `;
 
@@ -265,26 +290,38 @@ function PresenceAvatars({ users }: { users: PresenceUser[] }) {
   if (users.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-1" title={`${users.length} collaborator(s) online`}>
-      <Users className="h-3.5 w-3.5 text-zinc-500" />
-      <div className="flex -space-x-1.5">
-        {users.slice(0, 5).map((u) => (
-          <div
-            key={u.clientId}
-            className="h-6 w-6 rounded-full border-2 border-zinc-950 flex items-center justify-center text-[9px] font-bold text-white"
-            style={{ backgroundColor: u.colour }}
-            title={u.name}
-          >
-            {u.name.charAt(0).toUpperCase()}
-          </div>
-        ))}
-        {users.length > 5 && (
-          <div className="h-6 w-6 rounded-full border-2 border-zinc-950 bg-zinc-700 flex items-center justify-center text-[9px] font-bold text-zinc-300">
-            +{users.length - 5}
-          </div>
-        )}
+    <TooltipProvider>
+      <div className="flex items-center gap-1">
+        <Users className="h-3.5 w-3.5 text-zinc-500" />
+        <div className="flex -space-x-1.5">
+          {users.slice(0, 5).map((u) => (
+            <Tooltip key={u.clientId}>
+              <TooltipTrigger
+                render={
+                  <div
+                    className="h-6 w-6 rounded-full border-2 border-zinc-950 flex items-center justify-center text-[9px] font-bold text-white"
+                    style={{ backgroundColor: u.colour }}
+                  >
+                    {u.name.charAt(0).toUpperCase()}
+                  </div>
+                }
+              />
+              <TooltipContent
+                side="bottom"
+                className="bg-white text-black border border-zinc-200 shadow-md font-semibold"
+              >
+                {u.name}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          {users.length > 5 && (
+            <div className="h-6 w-6 rounded-full border-2 border-zinc-950 bg-zinc-700 flex items-center justify-center text-[9px] font-bold text-zinc-300">
+              +{users.length - 5}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
@@ -390,6 +427,38 @@ function EditorWorkspace({
   provider,
   incrementPendingOps,
 }: EditorWorkspaceProps) {
+  const [saveVersionOpen, setSaveVersionOpen] = React.useState(false);
+  const [saveLabel, setSaveLabel] = React.useState("");
+  const [isSavingVersion, setIsSavingVersion] = React.useState(false);
+
+  const handleSaveVersion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingVersion(true);
+    try {
+      const res = await fetch(`/api/documents/${documentId}/versions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          label: saveLabel.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to save version");
+      }
+
+      setSaveVersionOpen(false);
+      setSaveLabel("");
+    } catch (err: any) {
+      alert(err.message || "An error occurred");
+    } finally {
+      setIsSavingVersion(false);
+    }
+  };
+
   // ── 2. Tiptap editor with local Y.Doc + collaboration caret ────────────────
   const displayName = currentUser.name ?? currentUser.email;
   const caretColour = userColour(currentUser.id);
@@ -409,6 +478,41 @@ function EditorWorkspace({
         user: {
           name: displayName,
           color: caretColour,
+        },
+        render(user) {
+          const cursor = document.createElement("span");
+          cursor.classList.add("collaboration-cursor__caret");
+          cursor.setAttribute(
+            "style",
+            "position: relative; display: inline-block; width: 0; height: 1.2em; overflow: visible; vertical-align: text-bottom;",
+          );
+
+          // Outer trigger container (stable, holds hover state)
+          const trigger = document.createElement("span");
+          trigger.classList.add("avatar-trigger");
+          trigger.setAttribute(
+            "style",
+            "position: absolute; left: 5px; top: 0; width: 22px; height: 22px;",
+          );
+
+          // 1. Blinking avatar circle (pulsing wrapper)
+          const avatar = document.createElement("span");
+          avatar.classList.add("animate-pulse");
+          avatar.setAttribute(
+            "style",
+            `display: flex; width: 100%; height: 100%; border-radius: 9999px; background-color: ${user.color || "#6366f1"}; color: #ffffff; font-size: 12px; font-weight: bold; align-items: center; justify-content: center; user-select: none; box-shadow: 0 2px 4px rgba(0,0,0,0.5);`,
+          );
+          avatar.textContent = (user.name || "C").charAt(0).toUpperCase();
+
+          // 2. Stable, non-pulsing tooltip bubble (appended directly to trigger container, NOT inside avatar)
+          const tooltip = document.createElement("span");
+          tooltip.classList.add("tooltip-bubble");
+          tooltip.textContent = user.name || "Collaborator";
+
+          trigger.appendChild(avatar);
+          trigger.appendChild(tooltip);
+          cursor.appendChild(trigger);
+          return cursor;
         },
       }),
     ],
@@ -567,6 +671,30 @@ function EditorWorkspace({
 
             {/* Connection status badge */}
             <ConnectionIndicator />
+
+            <div className="h-4 w-px bg-zinc-800 hidden sm:block" />
+
+            {/* Manual Save Version */}
+            {!isReadOnly && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSaveVersionOpen(true)}
+                className="h-8 border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 hover:text-white hidden sm:inline-flex"
+              >
+                <Save className="h-3.5 w-3.5 mr-1.5 text-zinc-400" />
+                Save Version
+              </Button>
+            )}
+
+            {/* History link */}
+            <Link
+              href={`/documents/${documentId}/versions`}
+              className="inline-flex items-center justify-center h-8 rounded-md border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-800 text-zinc-300 hover:text-white px-3 text-xs font-semibold transition-colors"
+            >
+              <History className="h-3.5 w-3.5 mr-1.5 text-zinc-400" />
+              History
+            </Link>
           </div>
         </div>
       </header>
@@ -701,6 +829,57 @@ function EditorWorkspace({
           <EditorContent editor={editor} />
         </div>
       </main>
+
+      {/* ── Save Version Dialog ── */}
+      <Dialog open={saveVersionOpen} onOpenChange={setSaveVersionOpen}>
+        <DialogContent className="bg-zinc-950 border border-zinc-800 text-zinc-100 max-w-md rounded-xl">
+          <form onSubmit={handleSaveVersion}>
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold text-white">Save Version</DialogTitle>
+              <DialogDescription className="text-sm text-zinc-400">
+                Give this version snapshot a descriptive label so you can easily identify it in the
+                history timeline later.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                placeholder="e.g. Completed section 2, Draft V1, etc."
+                value={saveLabel}
+                onChange={(e) => setSaveLabel(e.target.value)}
+                maxLength={120}
+                className="w-full bg-zinc-900 border-zinc-800 text-white placeholder-zinc-500 focus-visible:ring-indigo-500 animate-none"
+                disabled={isSavingVersion}
+                autoFocus
+              />
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setSaveVersionOpen(false)}
+                disabled={isSavingVersion}
+                className="hover:bg-zinc-900 hover:text-zinc-300 text-zinc-400"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingVersion}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors"
+              >
+                {isSavingVersion ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  "Save Version"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

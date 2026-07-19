@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@syncpad/db";
+import { withRLS } from "@syncpad/db";
 import { UpdateDocumentInput } from "@syncpad/shared";
 import { requireUser, assertRole, UnauthorizedError, ForbiddenError } from "@/lib/permissions";
+import { mutationRateLimit, readJsonWithLimit } from "@/lib/request-guard";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -12,37 +13,39 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     // Assert VIEWER role (assertRole throws if user doesn't have access)
     await assertRole(userId, id, "VIEWER");
 
-    const doc = await prisma.document.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        title: true,
-        ownerId: true,
-        createdAt: true,
-        updatedAt: true,
-        lastSyncedAt: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const doc = await withRLS(userId, (tx) =>
+      tx.document.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          title: true,
+          ownerId: true,
+          createdAt: true,
+          updatedAt: true,
+          lastSyncedAt: true,
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
-        },
-        collaborators: {
-          select: {
-            userId: true,
-            role: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
+          collaborators: {
+            select: {
+              userId: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+    );
 
     if (!doc) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
@@ -67,11 +70,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const user = await requireUser();
     const userId = user.id!;
 
+    const limited = mutationRateLimit(req, userId);
+    if (limited) return limited;
+
     // Assert EDITOR role
     await assertRole(userId, id, "EDITOR");
 
-    const json = await req.json().catch(() => ({}));
-    const parseResult = UpdateDocumentInput.safeParse(json);
+    const json = await readJsonWithLimit(req);
+    if (!json.ok) return json.response;
+
+    const parseResult = UpdateDocumentInput.safeParse(json.data);
 
     if (!parseResult.success) {
       return NextResponse.json(
@@ -80,19 +88,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       );
     }
 
-    const updatedDoc = await prisma.document.update({
-      where: { id },
-      data: {
-        title: parseResult.data.title,
-      },
-      select: {
-        id: true,
-        title: true,
-        ownerId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const updatedDoc = await withRLS(userId, (tx) =>
+      tx.document.update({
+        where: { id },
+        data: {
+          title: parseResult.data.title,
+        },
+        select: {
+          id: true,
+          title: true,
+          ownerId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+    );
 
     return NextResponse.json(updatedDoc);
   } catch (error) {
@@ -113,12 +123,13 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const user = await requireUser();
     const userId = user.id!;
 
+    const limited = mutationRateLimit(req, userId);
+    if (limited) return limited;
+
     // Assert OWNER role
     await assertRole(userId, id, "OWNER");
 
-    await prisma.document.delete({
-      where: { id },
-    });
+    await withRLS(userId, (tx) => tx.document.delete({ where: { id } }));
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

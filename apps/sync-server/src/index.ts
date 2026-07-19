@@ -65,6 +65,49 @@ const server = Server.configure({
 
   // ─── Hooks ──────────────────────────────────────────────────────────────────
 
+  /** Handle incoming HTTP requests on the same port (for unloading documents). */
+  async onRequest(data) {
+    const { request, response, instance } = data;
+    const url = request.url;
+    const method = request.method;
+
+    if (method === "POST" && url?.startsWith("/api/documents/")) {
+      const parts = url.split("/");
+      // Expected path: /api/documents/[documentId]/unload
+      if (parts.length === 5 && parts[4] === "unload") {
+        const documentId = parts[3];
+
+        // Authorize via a shared secret header (SYNC_SERVER_INTERNAL_SECRET)
+        const authHeader = request.headers["authorization"];
+        const secret = process.env.SYNC_SERVER_INTERNAL_SECRET;
+
+        if (!secret || authHeader !== `Bearer ${secret}`) {
+          response.writeHead(401, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ error: "Unauthorized" }));
+          throw null; // Stop Hocuspocus default handler from responding
+        }
+
+        const doc = instance.documents.get(documentId);
+        if (doc) {
+          console.log(`[sync-server] Unloading active document ${documentId} via API request`);
+          // Disconnect all clients securely
+          doc.getConnections().forEach((conn) => conn.close());
+          // Delete from documents map
+          instance.documents.delete(documentId);
+          doc.destroy();
+        } else {
+          console.log(
+            `[sync-server] Document ${documentId} was not in memory (no active connections)`,
+          );
+        }
+
+        response.writeHead(200, { "Content-Type": "application/json" });
+        response.end(JSON.stringify({ success: true }));
+        throw null; // Stop Hocuspocus default handler from responding
+      }
+    }
+  },
+
   /** Access-control gate.  Throwing here rejects the connection entirely. */
   async onAuthenticate(data) {
     const ctx = await authenticate(data);

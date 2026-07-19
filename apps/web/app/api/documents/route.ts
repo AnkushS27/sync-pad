@@ -1,49 +1,52 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@syncpad/db";
+import { withRLS } from "@syncpad/db";
 import { CreateDocumentInput } from "@syncpad/shared";
 import { requireUser, UnauthorizedError } from "@/lib/permissions";
+import { mutationRateLimit, readJsonWithLimit } from "@/lib/request-guard";
 
 export async function GET() {
   try {
     const user = await requireUser();
     const userId = user.id!;
 
-    const documents = await prisma.document.findMany({
-      where: {
-        OR: [{ ownerId: userId }, { collaborators: { some: { userId } } }],
-      },
-      select: {
-        id: true,
-        title: true,
-        ownerId: true,
-        createdAt: true,
-        updatedAt: true,
-        lastSyncedAt: true,
-        owner: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+    const documents = await withRLS(userId, (tx) =>
+      tx.document.findMany({
+        where: {
+          OR: [{ ownerId: userId }, { collaborators: { some: { userId } } }],
         },
-        collaborators: {
-          select: {
-            userId: true,
-            role: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
+        select: {
+          id: true,
+          title: true,
+          ownerId: true,
+          createdAt: true,
+          updatedAt: true,
+          lastSyncedAt: true,
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          collaborators: {
+            select: {
+              userId: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
+        orderBy: {
+          updatedAt: "desc",
+        },
+      }),
+    );
 
     return NextResponse.json(documents);
   } catch (error) {
@@ -60,8 +63,13 @@ export async function POST(req: Request) {
     const user = await requireUser();
     const userId = user.id!;
 
-    const json = await req.json().catch(() => ({}));
-    const parseResult = CreateDocumentInput.safeParse(json);
+    const limited = mutationRateLimit(req, userId);
+    if (limited) return limited;
+
+    const json = await readJsonWithLimit(req);
+    if (!json.ok) return json.response;
+
+    const parseResult = CreateDocumentInput.safeParse(json.data);
 
     if (!parseResult.success) {
       return NextResponse.json(
@@ -70,19 +78,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const doc = await prisma.document.create({
-      data: {
-        title: parseResult.data.title,
-        ownerId: userId,
-      },
-      select: {
-        id: true,
-        title: true,
-        ownerId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const doc = await withRLS(userId, (tx) =>
+      tx.document.create({
+        data: {
+          title: parseResult.data.title,
+          ownerId: userId,
+        },
+        select: {
+          id: true,
+          title: true,
+          ownerId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+    );
 
     return NextResponse.json(doc, { status: 201 });
   } catch (error) {
