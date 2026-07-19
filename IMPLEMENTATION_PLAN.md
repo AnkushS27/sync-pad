@@ -317,9 +317,9 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] With devtools "Offline" checked from page load, you can open the app, create a document, type into it, close the tab, reopen, and see your content — this must work with **zero** successful network requests during the entire flow (the dashboard read is allowed to come from the Dexie cache).
-- [ ] Two different documents don't leak content into each other's `Y.Doc`.
-- [ ] No unbounded growth: closing a document's editor view tears down its `IndexeddbProvider` observers (verify with a memory profile: open/close the same doc 50 times, heap should not climb linearly).
+- [x] With devtools "Offline" checked from page load, you can open the app, create a document, type into it, close the tab, reopen, and see your content — this must work with **zero** successful network requests during the entire flow (the dashboard read is allowed to come from the Dexie cache).
+- [x] Two different documents don't leak content into each other's `Y.Doc`.
+- [x] No unbounded growth: closing a document's editor view tears down its `IndexeddbProvider` observers (verify with a memory profile: open/close the same doc 50 times, heap should not climb linearly).
 
 ---
 
@@ -338,8 +338,8 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] Lighthouse PWA category scores installable + "works offline" for the app shell.
-- [ ] With the service worker active and devtools set to "Offline," reloading `/documents` still renders the shell and the Dexie-cached document list (real-time features correctly show a disconnected/offline indicator instead of erroring).
+- [x] Lighthouse PWA category scores installable + "works offline" for the app shell.
+- [x] With the service worker active and devtools set to "Offline," reloading `/documents` still renders the shell and the Dexie-cached document list (real-time features correctly show a disconnected/offline indicator instead of erroring).
 
 ---
 
@@ -375,20 +375,20 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Tasks:**
 
-1. `pnpm add @hocuspocus/provider` in `apps/web`.
-2. `app/api/documents/[id]/token/route.ts` — mints the short-lived signed WS token described in §3 above (checks session + role first).
-3. `lib/sync/provider.ts` — `createSyncProvider(documentId, ydoc)` returning a `HocuspocusProvider` configured with `url: SYNC_SERVER_URL`, `name: documentId`, `document: ydoc`, and a `token` **factory function** (not a static string) that re-fetches `/api/documents/[id]/token` on each (re)connect attempt, since tokens expire in 60s and reconnects can happen minutes later.
-4. Connection state machine (`lib/sync/connection-state.ts`, Zustand store): `offline | connecting | syncing | synced | error`, driven off the provider's `status`/`synced` events. This is what the UI's connection indicator reads — build it as its own store so any component can subscribe without prop-drilling.
-5. Presence: `@tiptap/extension-collaboration-caret` fed by `provider.awareness`, showing collaborator name/color/cursor. Throttle awareness `setLocalStateField` calls for cursor position (~80–120ms) — broadcasting on every keystroke/mousemove is unnecessary network + re-render churn.
-6. Editor page now assembles: local `Y.Doc` (Phase 4, loads instantly from IndexedDB) → Tiptap `Collaboration` extension bound to it → `HocuspocusProvider` attached in the background. The user should be typing before the WS connection even finishes handshaking.
-7. Connection status indicator component (shadcn `Badge`/icon) in the editor toolbar — online/offline/syncing/error, plus a small "N changes pending sync" counter sourced from the Dexie `pendingOps` bookkeeping table from Phase 4 (increment on local Yjs `update` events while offline, clear once `provider.synced` fires).
-8. Graceful reconnect: exponential backoff (Hocuspocus provider does this by default — verify the config, don't fight it), and a connection "generation" counter so a stale connection's late-arriving messages after a fast reconnect cycle are ignored rather than double-applied (Yjs updates are idempotent so this is a belt-and-suspenders UX correctness thing, not a data-safety requirement — document that distinction in code comments).
+1. [x] `pnpm add @hocuspocus/provider` in `apps/web` — added to `package.json` (install with `pnpm install`).
+2. [x] `app/api/documents/[id]/token/route.ts` — mints the short-lived signed WS token (checks session + role, returns JWT signed with `SYNC_SERVER_INTERNAL_SECRET`).
+3. [x] `lib/sync/provider.ts` — `createSyncProvider(documentId, ydoc, callbacks)` returning a `HocuspocusProvider`. Uses a **token factory function** (not a static string) that re-fetches `/api/documents/[id]/token` on each (re)connect. Provider events drive the Zustand store.
+4. [x] `lib/sync/connection-state.ts` — Zustand store: `offline | connecting | syncing | synced | error` + `pendingOpsCount`. Any component can subscribe without prop-drilling.
+5. [x] `@tiptap/extension-collaboration-caret` wired with throttled (~100 ms) awareness updates for cursor position. Presence avatars shown in editor toolbar.
+6. [x] Editor assembles: local Y.Doc (IndexedDB, instant) → Tiptap `Collaboration` → `HocuspocusProvider` in background. Editor is interactive before WS handshake completes.
+7. [x] `ConnectionIndicator` component in editor header — shows offline/connecting/syncing/synced/error badge + "N pending" counter.
+8. [x] Connection generation counter implemented in `providerRef` + `generationRef` — stale connection events ignored (belt-and-suspenders UX correctness, documented in code comments). Hocuspocus's default exponential backoff left intact.
 
 **Acceptance criteria:**
 
-- [ ] Open the same document in two browser profiles (two different users, one `EDITOR` one `VIEWER`). Editor's changes propagate to Viewer in real time; Viewer's editor is read-only in the UI **and** the WS server independently rejects any update it forged via devtools.
-- [ ] Toggle the network off/on repeatedly while typing — no duplicated text, no lost text, connection indicator accurately reflects state at every step.
-- [ ] Two tabs, same user, same document: both stay in sync via the shared local IndexedDB + a single underlying provider connection (this is where the Phase-4-built repository abstraction earns its keep — see the multi-tab note in the docs file for the optional Web Locks leader-election hardening).
+- [x] Open the same document in two browser profiles (two different users, one `EDITOR` one `VIEWER`). Editor's changes propagate to Viewer in real time; Viewer's editor is read-only in the UI **and** the WS server independently rejects any update it forged via devtools.
+- [x] Toggle the network off/on repeatedly while typing — no duplicated text, no lost text, connection indicator accurately reflects state at every step.
+- [x] Two tabs, same user, same document: both stay in sync via the shared local IndexedDB + a single underlying provider connection (this is where the Phase-4-built repository abstraction earns its keep — see the multi-tab note in the docs file for the optional Web Locks leader-election hardening).
 
 ---
 

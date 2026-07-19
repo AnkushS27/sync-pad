@@ -32,23 +32,39 @@ export interface ConnectionContext {
 export async function authenticate(data: onAuthenticatePayload): Promise<ConnectionContext> {
   const { token, documentName } = data;
 
+  console.log(
+    `[auth-hook] authenticate called for document "${documentName}", token present: ${!!token}, token length: ${token?.length ?? 0}`,
+  );
+
   if (!token) {
+    console.error(`[auth-hook] Missing token for document "${documentName}"`);
     throw new Error("Missing authentication token");
   }
 
   let payload: WsTokenPayload;
   try {
     payload = jwt.verify(token, config.syncServerInternalSecret) as WsTokenPayload;
+    console.log(
+      `[auth-hook] Token verified OK for document "${documentName}", userId: ${payload.userId}, role: ${payload.role}`,
+    );
   } catch (err) {
     // Re-throw with a generic message — don't leak internal details to the
     // client, but do include some context for server-side logging.
     const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[auth-hook] Token verification failed for document "${documentName}":`,
+      message,
+      `(token prefix: ${token.substring(0, 20)}...)`,
+    );
     throw new Error(`Token verification failed: ${message}`);
   }
 
   // Ensure the token was minted for THIS document.  A valid token for Document
   // A must not open Document B.
   if (payload.documentId !== documentName) {
+    console.error(
+      `[auth-hook] Document mismatch: token has "${payload.documentId}", request is for "${documentName}"`,
+    );
     throw new Error(
       `Token document mismatch: expected "${documentName}", got "${payload.documentId}"`,
     );

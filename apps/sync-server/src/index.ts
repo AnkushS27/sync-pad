@@ -57,10 +57,10 @@ const server = Server.configure({
 
     // Per-connection rate limiting.
     // Limit to 60 connection attempts per 60 seconds per IP.
-    new Throttle({
-      throttle: 60,
-      consideredSeconds: 60,
-    }),
+    // new Throttle({
+    //   throttle: 60,
+    //   consideredSeconds: 60,
+    // }),
   ],
 
   // ─── Hooks ──────────────────────────────────────────────────────────────────

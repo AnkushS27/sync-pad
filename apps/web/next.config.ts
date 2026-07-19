@@ -32,6 +32,9 @@ const withSerwist = withSerwistInit({
   additionalPrecacheEntries: [],
 });
 
-const nextConfig: NextConfig = {/* config options here */};
+const nextConfig: NextConfig = {
+  /* config options here */
+  turbopack: {},
+};
 
 export default withSerwist(nextConfig);

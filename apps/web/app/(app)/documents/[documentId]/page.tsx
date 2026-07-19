@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { assertRole } from "@/lib/permissions";
+import { getUserRole } from "@/lib/permissions";
 import { EditorContentComponent } from "./editor-content";
 
 export const metadata = {
@@ -20,11 +20,11 @@ export default async function DocumentPage({
     redirect("/login");
   }
 
-  try {
-    // Assert at least VIEWER role
-    await assertRole(session.user.id, documentId, "VIEWER");
-  } catch {
-    // If forbidden, redirect to documents list
+  // Determine the user's role — getUserRole returns null if no access at all.
+  const role = await getUserRole(session.user.id, documentId);
+
+  if (!role) {
+    // User has no relation to this document — redirect to dashboard.
     redirect("/documents");
   }
 
@@ -34,5 +34,12 @@ export default async function DocumentPage({
     name: session.user.name || null,
   };
 
-  return <EditorContentComponent documentId={documentId} currentUser={currentUser} />;
+  return (
+    <EditorContentComponent
+      key={documentId}
+      documentId={documentId}
+      currentUser={currentUser}
+      role={role}
+    />
+  );
 }
