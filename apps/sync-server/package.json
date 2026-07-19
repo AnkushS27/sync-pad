@@ -3,13 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "tsx --env-file=.env watch src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "start": "node dist/index.js",
-    "lint": "echo 'No lint script for sync-server package yet'"
+    "lint": "echo 'No lint script for sync-server package yet'",
+    "test:security": "node scripts/test-ws-security.mjs"
   },
   "dependencies": {
+    "@hocuspocus/extension-database": "^2.13.5",
     "@hocuspocus/extension-logger": "^2.13.5",
     "@hocuspocus/extension-throttle": "^2.13.5",
     "@hocuspocus/server": "^2.13.5",

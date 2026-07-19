@@ -29,6 +29,9 @@ importers:
 
   apps/sync-server:
     dependencies:
+      '@hocuspocus/extension-database':
+        specifier: ^2.13.5
+        version: 2.15.3(y-protocols@1.0.7)(yjs@13.6.31)
       '@hocuspocus/extension-logger':
         specifier: ^2.13.5
         version: 2.15.3(y-protocols@1.0.7)(yjs@13.6.31)
@@ -195,6 +198,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@types/node':
+        specifier: ^20.12.12
+        version: 20.19.43
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
@@ -951,6 +957,19 @@ packages:
     resolution: {integrity: sha512-Rzh1HF0a2o/tf90A3w2XNdXd9Ym3aQzMDfD3lAUONCX9B9QOdqdyiORrj6M25QEaJrEIbXFy8LtAFcL0wRdWzA==}
     dependencies:
       lib0: 0.2.117
+    dev: false
+
+  /@hocuspocus/extension-database@2.15.3(y-protocols@1.0.7)(yjs@13.6.31):
+    resolution: {integrity: sha512-+PVlPwfdVyOase68WEBb105ZwglhCLVeGpyNa3uwnmH+Ers7OKGLma2SDMKn3Vcb5oHzTzEGx7jNt+32KTEKXA==}
+    peerDependencies:
+      yjs: ^13.6.8
+    dependencies:
+      '@hocuspocus/server': 2.15.3(y-protocols@1.0.7)(yjs@13.6.31)
+      yjs: 13.6.31
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - y-protocols
     dev: false
 
   /@hocuspocus/extension-logger@2.15.3(y-protocols@1.0.7)(yjs@13.6.31):

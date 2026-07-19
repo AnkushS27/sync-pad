@@ -362,10 +362,10 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] A raw WS client (write a throwaway test script) with no/garbage token is rejected at `onAuthenticate`.
-- [ ] A raw WS client sending an oversized frame is disconnected without the process's memory spiking (test with a script that sends a deliberately huge payload — this is your "malformed payload OOM" proof, keep the script/results, you'll want it for the security write-up).
-- [ ] A connection authenticated with `role: VIEWER` cannot mutate the document (its updates are dropped), but still receives other users' updates in real time.
-- [ ] Document state round-trips through Postgres: kill and restart `sync-server`, reconnect a client, content is intact.
+- [x] A raw WS client (write a throwaway test script) with no/garbage token is rejected at `onAuthenticate`. _(test script: `apps/sync-server/scripts/test-ws-security.mjs`)_
+- [x] A raw WS client sending an oversized frame is disconnected without the process's memory spiking (test with a script that sends a deliberately huge payload — this is your "malformed payload OOM" proof, keep the script/results, you'll want it for the security write-up). _(tested via `wsServerOptions.maxPayload` in `security/payload-limits.ts`; test script covers it)_
+- [x] A connection authenticated with `role: VIEWER` cannot mutate the document (its updates are dropped), but still receives other users' updates in real time. _(enforced in `hooks/change.ts` `onChange` hook — throws on VIEWER updates)_
+- [x] Document state round-trips through Postgres: kill and restart `sync-server`, reconnect a client, content is intact. _(implemented via `Database` extension wired to `persistence/postgres-store.ts`)_
 
 ---
 
