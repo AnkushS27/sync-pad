@@ -13,14 +13,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { localDb } from "@/lib/local-store/dexie";
 
 interface CreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreateSuccess: (newDoc: { id: string; title: string }) => void;
+  currentUser: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
 }
 
-export function CreateDialog({ open, onOpenChange, onCreateSuccess }: CreateDialogProps) {
+export function CreateDialog({
+  open,
+  onOpenChange,
+  onCreateSuccess,
+  currentUser,
+}: CreateDialogProps) {
   const [title, setTitle] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -29,7 +40,6 @@ export function CreateDialog({ open, onOpenChange, onCreateSuccess }: CreateDial
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle("Untitled Document");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(null);
     }
   }, [open]);
@@ -60,7 +70,35 @@ export function CreateDialog({ open, onOpenChange, onCreateSuccess }: CreateDial
       onCreateSuccess(data);
       onOpenChange(false);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      const isNetworkError = err instanceof TypeError;
+      if (!navigator.onLine || isNetworkError) {
+        try {
+          const localId = "local_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+
+          await localDb.documentsMeta.add({
+            id: localId,
+            title,
+            ownerId: currentUser.id,
+            ownerEmail: currentUser.email,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+
+          await localDb.pendingOps.add({
+            documentId: localId,
+            timestamp: Date.now(),
+            changeType: "create",
+            title,
+          });
+
+          onCreateSuccess({ id: localId, title });
+          onOpenChange(false);
+        } catch {
+          setError("Failed to create document locally");
+        }
+      } else {
+        setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      }
     } finally {
       setIsSubmitting(false);
     }

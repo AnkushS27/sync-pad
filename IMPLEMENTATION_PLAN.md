@@ -297,9 +297,9 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] User A cannot see, fetch, rename, or delete User B's document even by guessing/crafting the document ID (IDOR test — write this as an actual test, not a manual check).
-- [ ] Viewer role cannot hit `PATCH`/`DELETE` endpoints (403).
-- [ ] Dashboard shows accurate owned vs. shared-with-me sections.
+- [x] User A cannot see, fetch, rename, or delete User B's document even by guessing/crafting the document ID (IDOR test — write this as an actual test, not a manual check).
+- [x] Viewer role cannot hit `PATCH`/`DELETE` endpoints (403).
+- [x] Dashboard shows accurate owned vs. shared-with-me sections.
 
 ---
 

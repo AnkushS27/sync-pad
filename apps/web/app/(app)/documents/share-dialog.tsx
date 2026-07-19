@@ -68,11 +68,8 @@ export function ShareDialog({ open, onOpenChange, documentId, documentTitle }: S
     if (open && documentId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchCollaborators();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail("");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRole("VIEWER");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(null);
     }
   }, [open, documentId, fetchCollaborators]);

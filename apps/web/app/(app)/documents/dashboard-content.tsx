@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { CreateDialog } from "./create-dialog";
 import { ShareDialog } from "./share-dialog";
 import { DocumentCard } from "./document-card";
+import { LocalDocumentStore } from "@/lib/local-store/repository";
 import {
   Dialog,
   DialogContent,
@@ -91,8 +92,30 @@ export function DashboardContent({ currentUser }: DashboardContentProps) {
       }
       const data = await res.json();
       setDocuments(data);
+      // Cache list for offline mode
+      await LocalDocumentStore.cacheDocumentsList(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "An error occurred while fetching documents");
+      console.warn("Could not fetch documents online, falling back to local cache:", err);
+      try {
+        const cached = await LocalDocumentStore.listCachedDocuments();
+        const docs = cached.map((c) => ({
+          id: c.id,
+          title: c.title,
+          ownerId: c.ownerId,
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+          owner: {
+            id: c.ownerId,
+            name: c.ownerEmail ? c.ownerEmail.split("@")[0] : "Owner",
+            email: c.ownerEmail || "",
+          },
+          collaborators: [],
+        }));
+        setDocuments(docs);
+        setError("Offline mode. Showing cached documents list.");
+      } catch {
+        setError(err instanceof Error ? err.message : "An error occurred while fetching documents");
+      }
     } finally {
       setLoading(false);
     }
@@ -452,6 +475,7 @@ export function DashboardContent({ currentUser }: DashboardContentProps) {
         open={createOpen}
         onOpenChange={setCreateOpen}
         onCreateSuccess={handleCreateSuccess}
+        currentUser={currentUser}
       />
 
       {/* Floating share dialog */}
