@@ -216,7 +216,7 @@ This is the same trick real production collaborative editors use, and it's the d
 - A pre-authentication message buffer is bounded per connection (Hocuspocus's built-in protection), so an unauthenticated client can't hold the server's memory hostage before even passing `onAuthenticate`.
 - Every accepted update is checked against a configured byte-size ceiling before being persisted; over-budget updates are rejected and logged (`SyncAuditLog`, `eventType: "update_rejected"`) rather than silently dropped or allowed to crash the store cycle.
 - Per-connection rate limiting (`@hocuspocus/extension-throttle`) bounds how fast any single client can push updates, independent of size.
-- On the REST side, Zod schemas enforce field-length/array-size ceilings before any handler logic runs, and Upstash-backed rate limiting caps request rate per user/IP on mutation and auth routes.
+- On the REST side, Zod schemas enforce field-length/array-size ceilings before any handler logic runs, and an in-memory Map-based rate limiter (implemented request-scoped for simplicity in this project) caps request rate per user/IP on mutation and auth routes.
 - This is tested directly: a standalone load script intentionally sends malformed/oversized frames against a running `sync-server` and the memory footprint is verified not to spike (see Implementation Plan, Phase 6 & 11).
 
 **Tenant isolation.** Every document-scoped query is written so a user can only ever retrieve rows they have an explicit `Document.ownerId` or `DocumentCollaborator` relationship to — enforced at the application layer and, redundantly, via Postgres RLS.

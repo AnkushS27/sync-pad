@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@syncpad/db";
 import bcryptjs from "bcryptjs";
 import { z } from "zod";
+import { authRateLimit } from "@/lib/request-guard";
 
 const RegisterSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -11,6 +12,9 @@ const RegisterSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const limited = authRateLimit(req);
+    if (limited) return limited;
+
     const body = await req.json();
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {

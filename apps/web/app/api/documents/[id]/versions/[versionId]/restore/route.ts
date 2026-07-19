@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
-import * as Y from "yjs";
+import * as YjsModule from "yjs";
 import { withRLS } from "@syncpad/db";
+
+const Y = (YjsModule as any).default || YjsModule;
 import { MAX_DOCUMENT_SIZE_BYTES } from "@syncpad/shared";
 import { assertRole, ForbiddenError, requireUser, UnauthorizedError } from "@/lib/permissions";
 import { mutationRateLimit } from "@/lib/request-guard";
 
 function applyVersionAsYjsEdit(currentState: Uint8Array | null, targetSnapshot: Uint8Array) {
+  console.log(
+    "IN RESTORE ROUTE - Y:",
+    typeof Y,
+    Y ? Object.keys(Y) : "null",
+    "Y.Doc:",
+    Y ? typeof Y.Doc : "undefined",
+  );
   const liveDoc = new Y.Doc();
   if (currentState) {
     Y.applyUpdate(liveDoc, currentState);
@@ -152,6 +161,17 @@ export async function POST(
 
     return NextResponse.json(restored.version);
   } catch (error) {
+    if (error instanceof Error) {
+      console.log("RESTORE_ERROR_MESSAGE:", error.message);
+      if (error.stack) {
+        const lines = error.stack.split("\n");
+        for (let i = 0; i < Math.min(lines.length, 10); i++) {
+          console.log(`RESTORE_ERROR_STACK_${i}:`, lines[i]);
+        }
+      }
+    } else {
+      console.log("RESTORE_ERROR_UNKNOWN:", error);
+    }
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

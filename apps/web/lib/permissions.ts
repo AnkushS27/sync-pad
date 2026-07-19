@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@syncpad/db";
+import { withRLS } from "@syncpad/db";
 import { Role } from "@syncpad/shared";
 
 export class UnauthorizedError extends Error {
@@ -31,34 +31,36 @@ export async function requireUser() {
 }
 
 export async function getUserRole(userId: string, documentId: string): Promise<Role | null> {
-  const doc = await prisma.document.findUnique({
-    where: { id: documentId },
-    select: { ownerId: true },
-  });
+  return withRLS(userId, async (tx) => {
+    const doc = await tx.document.findUnique({
+      where: { id: documentId },
+      select: { ownerId: true },
+    });
 
-  if (!doc) {
-    return null;
-  }
+    if (!doc) {
+      return null;
+    }
 
-  if (doc.ownerId === userId) {
-    return Role.OWNER;
-  }
+    if (doc.ownerId === userId) {
+      return Role.OWNER;
+    }
 
-  const collaboration = await prisma.documentCollaborator.findUnique({
-    where: {
-      documentId_userId: {
-        documentId,
-        userId,
+    const collaboration = await tx.documentCollaborator.findUnique({
+      where: {
+        documentId_userId: {
+          documentId,
+          userId,
+        },
       },
-    },
-    select: { role: true },
+      select: { role: true },
+    });
+
+    if (!collaboration) {
+      return null;
+    }
+
+    return collaboration.role as Role;
   });
-
-  if (!collaboration) {
-    return null;
-  }
-
-  return collaboration.role as Role;
 }
 
 export async function assertRole(userId: string, documentId: string, minRole: Role) {

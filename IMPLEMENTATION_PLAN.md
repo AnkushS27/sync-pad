@@ -47,7 +47,7 @@ This plan is split into **13 phases (Phase 0 → Phase 12)**. Each phase is a se
 | PWA                         | **Serwist** (`@serwist/next`), not `next-pwa`                                                                                                                                                   | `next-pwa` requires Webpack; Next.js 16 defaults to Turbopack. Serwist works with it.                                                                                                                                                                                                                                                                                                                                                               |
 | AI features                 | Vercel AI SDK (`ai` package) with a provider abstraction (Groq / OpenAI / Gemini via env var)                                                                                                   | "Good to have." Kept behind a feature flag so the app fully works with zero AI keys configured.                                                                                                                                                                                                                                                                                                                                                     |
 | Testing                     | Vitest (unit/integration), Playwright (E2E, incl. multi-context convergence tests)                                                                                                              | —                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Rate limiting (REST)        | Upstash Ratelimit (Redis-backed, serverless-friendly)                                                                                                                                           | —                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Rate limiting (REST)        | In-memory Map-based (Simple, local key-value store)                                                                                                                                             | —                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Rate limiting (WS)          | `@hocuspocus/extension-throttle` + custom payload-size hooks                                                                                                                                    | —                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | CI/CD                       | GitHub Actions                                                                                                                                                                                  | Lint/typecheck/test on PR, migrate+deploy on merge to `main`.                                                                                                                                                                                                                                                                                                                                                                                       |
 | Hosting                     | `apps/web` → Vercel. `apps/sync-server` → Railway or Fly.io (Docker, long-lived process) — Prisma Compute is a valid alternative since it colocates with Prisma Postgres. DB → Prisma Postgres. | Next.js serverless functions cannot hold a persistent WebSocket connection, so the realtime layer must run somewhere else.                                                                                                                                                                                                                                                                                                                          |
@@ -154,9 +154,8 @@ AUTH_URL="http://localhost:3000"
 SYNC_SERVER_URL="ws://localhost:1234"          # apps/web -> client-side WS target
 SYNC_SERVER_INTERNAL_SECRET="..."              # HMAC secret so sync-server can verify tokens minted by apps/web
 
-# --- Rate limiting ---
-UPSTASH_REDIS_REST_URL="..."
-UPSTASH_REDIS_REST_TOKEN="..."
+# --- Rate limiting (Not using Redis, using only in-memory rate limiter) ---
+# No environment variables needed for rate limiting.
 
 # --- AI (optional — app must run fully without these) ---
 AI_PROVIDER="groq"                             # groq | openai | gemini | none
@@ -412,9 +411,9 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] Restoring an old version while a second browser session is actively typing does not erase or corrupt the second session's concurrent edits — write this as an actual Playwright test with two contexts, not just a manual check.
-- [ ] Version list correctly shows manual vs. auto entries and who created each manual one.
-- [ ] Retention job measurably prunes old auto-saves without touching manual ones (test with a seeded set of fake old versions).
+- [x] Restoring an old version while a second browser session is actively typing does not erase or corrupt the second session's concurrent edits — write this as an actual Playwright test with two contexts, not just a manual check.
+- [x] Version list correctly shows manual vs. auto entries and who created each manual one.
+- [x] Retention job measurably prunes old auto-saves without touching manual ones (test with a seeded set of fake old versions).
 
 ---
 
@@ -428,14 +427,14 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 2. Re-verify every REST route from Phase 3 and every WS hook from Phase 6 against the role matrix in the docs file — write this as a parametrized integration test (`role x endpoint` matrix) rather than trusting memory.
 3. Confirm oversized-payload handling end to end again (Phase 6 tested the WS path; add the equivalent for REST: a version-restore or document-create payload beyond Zod's configured max length should 400, not 500/crash).
 4. XSS: confirm Tiptap/ProseMirror content is only ever rendered through the editor's own renderer (structured JSON, not raw HTML interpolation anywhere) — grep the codebase for any `dangerouslySetInnerHTML` and justify or remove each instance.
-5. Rate limit the REST API (Upstash) per user on mutation-capable routes (`POST`/`PATCH`/`DELETE`), and per-IP on `/api/auth/*` and `/register` to blunt credential stuffing.
+5. Rate limit the REST API (in-memory Map-based) per user on mutation-capable routes (`POST`/`PATCH`/`DELETE`), and per-IP on `/api/auth/*` and `/register` to blunt credential stuffing.
 6. Secrets check: confirm `SYNC_SERVER_INTERNAL_SECRET` and `AUTH_SECRET` are never sent to the client bundle (search build output).
 
 **Acceptance criteria:**
 
-- [ ] With RLS enabled and the app-level `where` clause temporarily stripped out (a deliberate test), cross-tenant reads still fail at the DB.
-- [ ] Full role-matrix integration test suite passes.
-- [ ] A fuzz-ish test sending garbage/oversized bodies to every mutation route returns clean 4xxs, server logs show it, process doesn't crash.
+- [x] With RLS enabled and the app-level `where` clause temporarily stripped out (a deliberate test), cross-tenant reads still fail at the DB.
+- [x] Full role-matrix integration test suite passes.
+- [x] A fuzz-ish test sending garbage/oversized bodies to every mutation route returns clean 4xxs, server logs show it, process doesn't crash.
 
 ---
 
