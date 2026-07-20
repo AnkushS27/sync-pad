@@ -269,8 +269,8 @@ export function DocumentCard({
         </div>
       </CardContent>
 
-      <CardFooter className="p-5 pt-3 border-t border-zinc-800/40 flex items-center justify-between">
-        <span className="text-[11px] font-medium text-zinc-500">Updated {formattedDate}</span>
+      <CardFooter className="p-5 pt-3 border-t border-zinc-800/60 bg-zinc-950/40 rounded-b-xl flex items-center justify-between mt-auto">
+        <span className="text-[11px] font-medium text-zinc-400">Updated {formattedDate}</span>
 
         {/* Collaborators Avatar Stack */}
         <div className="flex -space-x-1.5 overflow-hidden">
@@ -282,21 +282,21 @@ export function DocumentCard({
               return (
                 <Avatar
                   key={collab.userId}
-                  className="h-6 w-6 ring-2 ring-zinc-900 border border-zinc-800"
+                  className="h-6 w-6 ring-2 ring-zinc-900 border border-zinc-700/60"
                 >
-                  <AvatarFallback className="text-[9px] font-bold bg-zinc-800 text-zinc-300">
+                  <AvatarFallback className="text-[9px] font-bold bg-zinc-800 text-zinc-200">
                     {fallback}
                   </AvatarFallback>
                 </Avatar>
               );
             })
           ) : (
-            <div className="flex items-center text-[10px] text-zinc-600 gap-1 select-none">
+            <div className="flex items-center text-[10px] text-zinc-500 gap-1 select-none">
               Private
             </div>
           )}
           {doc.collaborators.length > 3 && (
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-800 text-[9px] font-bold text-zinc-400 ring-2 ring-zinc-900 select-none">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-800 text-[9px] font-bold text-zinc-300 ring-2 ring-zinc-900 select-none">
               +{doc.collaborators.length - 3}
             </div>
           )}
