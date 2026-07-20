@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      prisma:
+        specifier: ^5.22.0
+        version: 5.22.0
     devDependencies:
       eslint:
         specifier: ^9.0.0
@@ -23,9 +27,6 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.9.5
-      prisma:
-        specifier: ^5.22.0
-        version: 5.22.0
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
@@ -208,13 +209,13 @@ importers:
       '@prisma/client':
         specifier: ^5.14.0
         version: 5.22.0(prisma@5.22.0)
+      prisma:
+        specifier: ^5.14.0
+        version: 5.22.0
     devDependencies:
       '@types/node':
         specifier: ^20.12.12
         version: 20.19.43
-      prisma:
-        specifier: ^5.14.0
-        version: 5.22.0
       typescript:
         specifier: ^5.4.5
         version: 5.9.3
@@ -1707,9 +1708,11 @@ packages:
 
   /@prisma/debug@5.22.0:
     resolution: {integrity: sha512-AUt44v3YJeggO2ZU5BkXI7M4hu9BF2zzH2iF2V5pyXT/lRTyWiElZ7It+bRH1EshoMRxHgpYg4VB6rCM+mG5jQ==}
+    dev: false
 
   /@prisma/engines-version@5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2:
     resolution: {integrity: sha512-2PTmxFR2yHW/eB3uqWtcgRcgAbG1rwG9ZriSvQw+nnb7c4uCr3RAcGMb6/zfE88SKlC1Nj2ziUvc96Z379mHgQ==}
+    dev: false
 
   /@prisma/engines@5.22.0:
     resolution: {integrity: sha512-UNjfslWhAt06kVL3CjkuYpHAWSO6L4kDCVPegV6itt7nD1kSJavd3vhgAEhjglLJJKEdJ7oIqDJ+yHk6qO8gPA==}
@@ -1719,6 +1722,7 @@ packages:
       '@prisma/engines-version': 5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2
       '@prisma/fetch-engine': 5.22.0
       '@prisma/get-platform': 5.22.0
+    dev: false
 
   /@prisma/fetch-engine@5.22.0:
     resolution: {integrity: sha512-bkrD/Mc2fSvkQBV5EpoFcZ87AvOgDxbG99488a5cexp5Ccny+UM6MAe/UFkUC0wLYD9+9befNOqGiIJhhq+HbA==}
@@ -1726,11 +1730,13 @@ packages:
       '@prisma/debug': 5.22.0
       '@prisma/engines-version': 5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2
       '@prisma/get-platform': 5.22.0
+    dev: false
 
   /@prisma/get-platform@5.22.0:
     resolution: {integrity: sha512-pHhpQdr1UPFpt+zFfnPazhulaZYCUqeIcPpJViYoq9R+D/yw4fjE+CtnsnKzPYm0ddUbeXUzjGVGIRVgPDCk4Q==}
     dependencies:
       '@prisma/debug': 5.22.0
+    dev: false
 
   /@rollup/rollup-android-arm-eabi@4.62.2:
     resolution: {integrity: sha512-6o7ZLZK+BeenkZCFNDXqpbjw9bD6nuWonvS/lwQJp7NoVVxm6p3qE7qQ5jGuBjiFsgvqjD8mZAU5oWxTmbOeOg==}
@@ -6268,6 +6274,7 @@ packages:
       '@prisma/engines': 5.22.0
     optionalDependencies:
       fsevents: 2.3.3
+    dev: false
 
   /prompts@2.4.2:
     resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
