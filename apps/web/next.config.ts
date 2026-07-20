@@ -35,6 +35,12 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   /* config options here */
   transpilePackages: ["@syncpad/db", "@syncpad/shared"],
+  outputFileTracingIncludes: {
+    "/api/**/*": [
+      "../../node_modules/.prisma/client/**/*",
+      "../../node_modules/@prisma/client/**/*",
+    ],
+  },
   turbopack: {},
 };
 
