@@ -5,9 +5,9 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "prisma generate && (mkdir -p ../../apps/web/.prisma && cp -r ../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client ../../apps/web/.prisma/ || true) && tsc",
+    "build": "pnpm exec prisma generate && (mkdir -p ../../apps/web/.prisma && cp -r ../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client ../../apps/web/.prisma/ || true) && tsc",
     "typecheck": "tsc --noEmit",
-    "generate": "prisma generate",
+    "generate": "pnpm exec prisma generate",
     "migrate": "prisma migrate dev",
     "lint": "echo 'No lint script for db package yet'"
   },
