@@ -5,7 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "prisma generate && mkdir -p ../../apps/web/.prisma && cp -r ../../node_modules/.prisma/client ../../apps/web/.prisma/client && tsc",
+    "build": "prisma generate && mkdir -p ../../apps/web/.prisma && cp -r ../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client ../../apps/web/.prisma/ && tsc",
     "typecheck": "tsc --noEmit",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev",
