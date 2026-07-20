@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   serverExternalPackages: ["@prisma/client", "@syncpad/db"],
   transpilePackages: ["@syncpad/shared"],
+  outputFileTracingIncludes: {
+    "**/*": [
+      "../../node_modules/.prisma/client/**/*",
+      "../../node_modules/@prisma/client/**/*",
+      "./.prisma/client/**/*",
+    ],
+  },
   turbopack: {},
 };
 
