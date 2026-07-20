@@ -42,6 +42,7 @@ const server = Server.configure({
     // Hocuspocus calls `fetch` when a document is first loaded and `store` on
     // each debounced save cycle.
     new Database({
+      debounce: 3000,
       fetch: async (data) =>
         fetchDocument({
           documentName: data.documentName,

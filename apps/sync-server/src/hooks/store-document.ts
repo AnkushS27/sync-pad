@@ -27,22 +27,22 @@ import { storeDocument } from "../persistence/postgres-store.js";
 import { writeAuditLog } from "../security/audit-log.js";
 import type { ConnectionContext } from "./authenticate.js";
 
-async function pruneAutoSaves(documentName: string): Promise<void> {
-  const autoSaves = await prisma.documentVersion.findMany({
-    where: { documentId: documentName, isAutoSave: true },
-    orderBy: { createdAt: "desc" },
-  });
+export interface VersionItem {
+  id: string;
+  createdAt: Date;
+}
 
+export function getVersionsToPrune(autoSaves: VersionItem[], now: Date = new Date()): string[] {
   const toDelete: string[] = [];
-  const now = Date.now();
   const oneDayMs = 24 * 60 * 60 * 1000;
+  const nowMs = now.getTime();
 
   const hourlyBuckets = new Set<string>();
   const dailyBuckets = new Set<string>();
 
   for (const version of autoSaves) {
     const time = version.createdAt.getTime();
-    const age = now - time;
+    const age = nowMs - time;
 
     if (age <= oneDayMs) {
       // Keep hourly: group by yyyy-MM-dd-HH
@@ -62,6 +62,17 @@ async function pruneAutoSaves(documentName: string): Promise<void> {
       }
     }
   }
+
+  return toDelete;
+}
+
+async function pruneAutoSaves(documentName: string): Promise<void> {
+  const autoSaves = await prisma.documentVersion.findMany({
+    where: { documentId: documentName, isAutoSave: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const toDelete = getVersionsToPrune(autoSaves);
 
   if (toDelete.length > 0) {
     await prisma.documentVersion.deleteMany({

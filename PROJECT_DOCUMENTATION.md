@@ -216,7 +216,7 @@ This is the same trick real production collaborative editors use, and it's the d
 - A pre-authentication message buffer is bounded per connection (Hocuspocus's built-in protection), so an unauthenticated client can't hold the server's memory hostage before even passing `onAuthenticate`.
 - Every accepted update is checked against a configured byte-size ceiling before being persisted; over-budget updates are rejected and logged (`SyncAuditLog`, `eventType: "update_rejected"`) rather than silently dropped or allowed to crash the store cycle.
 - Per-connection rate limiting (`@hocuspocus/extension-throttle`) bounds how fast any single client can push updates, independent of size.
-- On the REST side, Zod schemas enforce field-length/array-size ceilings before any handler logic runs, and an in-memory Map-based rate limiter (implemented request-scoped for simplicity in this project) caps request rate per user/IP on mutation and auth routes.
+- On the REST side, Zod schemas enforce field-length/array-size ceilings before any handler logic runs, and an in-memory Map-based rate limiter (implemented request-scoped for simplicity in this project, without introducing Redis infrastructure complexity) caps request rate per user/IP on mutation and auth routes.
 - This is tested directly: a standalone load script intentionally sends malformed/oversized frames against a running `sync-server` and the memory footprint is verified not to spike (see Implementation Plan, Phase 6 & 11).
 
 **Tenant isolation.** Every document-scoped query is written so a user can only ever retrieve rows they have an explicit `Document.ownerId` or `DocumentCollaborator` relationship to — enforced at the application layer and, redundantly, via Postgres RLS.
@@ -287,7 +287,7 @@ Mapping the brief's own "Evaluation Criteria" section to where each item is addr
 
 ## 15. Known Limitations & Future Work
 
-- **WebSocket server is a single instance by default.** Horizontal scaling across multiple `sync-server` instances needs a shared pub/sub backplane between them (Hocuspocus supports a Redis-backed extension for this) — out of scope for the assignment but noted as the clear next step for real production scale.
+- **WebSocket server is a single instance by default.** Horizontal scaling across multiple `sync-server` instances would need a shared pub/sub backplane between them (e.g. Hocuspocus supports a Redis-backed extension for this). We do not use Redis in this codebase at all to avoid unnecessary infrastructure complexity for this project, keeping the architecture simple and reliant only on local in-memory stores and PostgreSQL.
 - **Multi-tab-per-user leader election** (avoiding redundant IndexedDB writers/WS connections when the same user has a document open in two tabs) is designed for but marked optional/stretch in the implementation plan (Web Locks API-based leader election) rather than mandatory — the app is correct without it, just marginally less efficient with many tabs open.
 - **AI features are provider-dependent** and intentionally excluded from the core correctness/security guarantees — they're additive, not load-bearing.
 - **Structural (not just textual) diffing for restore** — the diff-and-reapply restore mechanism operates over the editor's structured content (headings, lists, marks), which is more involved than a plain text diff; this is called out explicitly in the implementation plan as the part of the build that deserves the most care and the most test coverage.

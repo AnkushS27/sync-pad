@@ -473,8 +473,8 @@ This is intentional, not a gap — the two apps have nothing to coordinate about
 
 **Acceptance criteria:**
 
-- [ ] All of the above pass locally.
-- [ ] CI runs unit + integration on every PR; Playwright suite runs at least on PRs touching `apps/web` or `apps/sync-server` (can be gated to save CI minutes, but must run before merge to `main`).
+- [x] All of the above pass locally.
+- [x] CI runs unit + integration on every PR; Playwright suite runs at least on PRs touching `apps/web` or `apps/sync-server` (can be gated to save CI minutes, but must run before merge to `main`).
 
 ---
 

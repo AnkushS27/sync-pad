@@ -1,54 +1,9 @@
 import { NextResponse } from "next/server";
-import * as YjsModule from "yjs";
 import { withRLS } from "@syncpad/db";
-
-const Y = (YjsModule as any).default || YjsModule;
 import { MAX_DOCUMENT_SIZE_BYTES } from "@syncpad/shared";
 import { assertRole, ForbiddenError, requireUser, UnauthorizedError } from "@/lib/permissions";
 import { mutationRateLimit } from "@/lib/request-guard";
-
-function applyVersionAsYjsEdit(currentState: Uint8Array | null, targetSnapshot: Uint8Array) {
-  console.log(
-    "IN RESTORE ROUTE - Y:",
-    typeof Y,
-    Y ? Object.keys(Y) : "null",
-    "Y.Doc:",
-    Y ? typeof Y.Doc : "undefined",
-  );
-  const liveDoc = new Y.Doc();
-  if (currentState) {
-    Y.applyUpdate(liveDoc, currentState);
-  }
-
-  const targetDoc = new Y.Doc();
-  Y.applyUpdate(targetDoc, targetSnapshot);
-
-  const liveFragment = liveDoc.getXmlFragment("default");
-  const targetFragment = targetDoc.getXmlFragment("default");
-
-  liveDoc.transact(() => {
-    if (liveFragment.length > 0) {
-      liveFragment.delete(0, liveFragment.length);
-    }
-
-    const clonedNodes = targetFragment
-      .toArray()
-      .filter(
-        (node): node is Y.XmlElement | Y.XmlText =>
-          node instanceof Y.XmlElement || node instanceof Y.XmlText,
-      )
-      .map((node) => node.clone() as Y.XmlElement | Y.XmlText);
-
-    if (clonedNodes.length > 0) {
-      liveFragment.insert(0, clonedNodes);
-    }
-  }, "version-restore");
-
-  return {
-    state: Buffer.from(Y.encodeStateAsUpdate(liveDoc)),
-    stateVector: Buffer.from(Y.encodeStateVector(liveDoc)),
-  };
-}
+import { applyVersionAsYjsEdit } from "@/lib/sync/restore-helper";
 
 export async function POST(
   req: Request,
