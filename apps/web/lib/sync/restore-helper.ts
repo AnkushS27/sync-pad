@@ -1,6 +1,4 @@
-import * as YjsModule from "yjs";
-
-const Y = (YjsModule as any).default || YjsModule;
+import * as Y from "yjs";
 
 function patchText(liveText: Y.XmlText, targetStr: string) {
   const liveStr = liveText.toString();

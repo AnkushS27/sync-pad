@@ -23,9 +23,9 @@ const mockTx = {
   },
 };
 
-const mockWithRLS = vi.fn((userId, fn) => fn(mockTx));
+const mockWithRLS = vi.fn((_userId: string, fn: (tx: typeof mockTx) => unknown) => fn(mockTx));
 vi.mock("@syncpad/db", () => ({
-  withRLS: (userId: string, fn: any) => mockWithRLS(userId, fn),
+  withRLS: (_userId: string, fn: (_tx: typeof mockTx) => unknown) => mockWithRLS(_userId, fn),
 }));
 
 describe("Permissions Unit Tests", () => {

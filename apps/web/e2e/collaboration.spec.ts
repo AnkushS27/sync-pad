@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, Page } from "@playwright/test";
 
 test.describe("SyncPad E2E Collaboration & Convergence Tests", () => {
   test.describe.configure({ mode: "serial" });
@@ -9,7 +9,7 @@ test.describe("SyncPad E2E Collaboration & Convergence Tests", () => {
   const password = "password123";
 
   // Helper to register and log in a user
-  async function registerAndLogin(page: any, name: string, email: string) {
+  async function registerAndLogin(page: Page, name: string, email: string) {
     await page.goto("/register");
     await page.fill('input[placeholder="John Doe"]', name);
     await page.fill('input[placeholder="you@example.com"]', email);

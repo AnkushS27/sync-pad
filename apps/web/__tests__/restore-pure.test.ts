@@ -32,7 +32,7 @@ describe("Restore Logic Unit Tests", () => {
     const targetSnapshot = Y.encodeStateAsUpdate(targetDoc);
 
     // 3. Apply the restore
-    const { state, stateVector } = applyVersionAsYjsEdit(currentState, targetSnapshot);
+    const { state } = applyVersionAsYjsEdit(currentState, targetSnapshot);
 
     // 4. Verify that the returned state update matches targetDoc contents when applied
     const resultDoc = new Y.Doc();

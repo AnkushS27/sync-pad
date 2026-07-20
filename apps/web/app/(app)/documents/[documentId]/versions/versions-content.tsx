@@ -132,34 +132,39 @@ export function VersionsContentComponent({ documentId, role }: VersionsContentCo
   const [isRestoring, setIsRestoring] = React.useState(false);
 
   // 1. Fetch versions list
-  const fetchVersions = React.useCallback(async () => {
-    setLoadingList(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/documents/${documentId}/versions`);
-      if (!res.ok) throw new Error("Failed to load versions history");
-      const data = await res.json();
-      setVersions(data);
-      if (data.length > 0) {
-        setSelectedId(data[0].id);
-      }
-    } catch (err: any) {
-      setError(err.message || "An error occurred");
-    } finally {
-      setLoadingList(false);
-    }
-  }, [documentId]);
-
   React.useEffect(() => {
-    fetchVersions();
-  }, [fetchVersions]);
+    let ignore = false;
+    async function load() {
+      setError(null);
+      try {
+        const res = await fetch(`/api/documents/${documentId}/versions`);
+        if (!res.ok) throw new Error("Failed to load versions history");
+        const data = await res.json();
+        if (!ignore) {
+          setVersions(data);
+          if (data.length > 0) {
+            setSelectedId((prev) => prev ?? data[0].id);
+          }
+        }
+      } catch (err: unknown) {
+        if (!ignore) {
+          setError(err instanceof Error ? err.message : "An error occurred");
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingList(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      ignore = true;
+    };
+  }, [documentId]);
 
   // 2. Fetch snapshot for selected version
   React.useEffect(() => {
-    if (!selectedId) {
-      setSelectedSnapshot(null);
-      return;
-    }
+    if (!selectedId) return;
 
     let active = true;
     async function fetchSnapshot() {
@@ -171,9 +176,9 @@ export function VersionsContentComponent({ documentId, role }: VersionsContentCo
         if (active) {
           setSelectedSnapshot(data.snapshotBase64);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (active) {
-          alert(err.message || "Could not fetch preview");
+          alert(err instanceof Error ? err.message : "Could not fetch preview");
         }
       } finally {
         if (active) {
@@ -208,8 +213,8 @@ export function VersionsContentComponent({ documentId, role }: VersionsContentCo
       }
 
       router.push(`/documents/${documentId}`);
-    } catch (err: any) {
-      alert(err.message || "An error occurred during restore");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "An error occurred during restore");
       setIsRestoring(false);
     }
   };

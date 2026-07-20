@@ -34,6 +34,7 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  transpilePackages: ["@syncpad/db", "@syncpad/shared"],
   turbopack: {},
 };
 

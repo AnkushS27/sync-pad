@@ -25,7 +25,7 @@ vi.mock("@/lib/permissions", () => ({
 }));
 
 // Mock the database module
-const mockWithRLS = vi.fn((userId, fn) => fn(mockTx));
+const mockWithRLS = vi.fn((_userId: string, fn: (tx: typeof mockTx) => unknown) => fn(mockTx));
 const mockTx = {
   document: {
     findMany: vi.fn(),
@@ -57,7 +57,7 @@ vi.mock("@syncpad/db", () => ({
   get prisma() {
     return mockTx;
   },
-  withRLS: (userId: string, fn: any) => mockWithRLS(userId, fn),
+  withRLS: (_userId: string, fn: (_tx: typeof mockTx) => unknown) => mockWithRLS(_userId, fn),
 }));
 
 // Import endpoint handlers
@@ -67,13 +67,8 @@ import {
   PATCH as patchDoc,
   DELETE as deleteDoc,
 } from "../app/api/documents/[id]/route";
-import {
-  POST as postCollab,
-  PATCH as patchCollab,
-  DELETE as deleteCollab,
-} from "../app/api/documents/[id]/collaborators/route";
+import { POST as postCollab } from "../app/api/documents/[id]/collaborators/route";
 import { GET as getVersions, POST as postVersion } from "../app/api/documents/[id]/versions/route";
-import { GET as getVersion } from "../app/api/documents/[id]/versions/[versionId]/route";
 import { POST as restoreVersion } from "../app/api/documents/[id]/versions/[versionId]/restore/route";
 
 describe("REST API Role-Matrix Integration Tests", () => {
@@ -369,22 +364,6 @@ describe("REST API Role-Matrix Integration Tests", () => {
 
       const response = await postVersion(req, { params: Promise.resolve({ id: "doc-123" }) });
       expect(response.status).toBe(400);
-    });
-  });
-
-  describe("Diagnostic Yjs", () => {
-    it("logs Yjs module structure", async () => {
-      const YjsModule = await import("yjs");
-      console.log("DIAGNOSTIC YJS MODULE KEYS:", Object.keys(YjsModule));
-      console.log(
-        "DIAGNOSTIC YJS MODULE DEFAULT KEYS:",
-        YjsModule.default ? Object.keys(YjsModule.default) : "NO DEFAULT",
-      );
-      console.log("DIAGNOSTIC YJS MODULE Doc type:", typeof YjsModule.Doc);
-      console.log(
-        "DIAGNOSTIC YJS MODULE default.Doc type:",
-        YjsModule.default ? typeof (YjsModule.default as any).Doc : "NO DEFAULT.Doc",
-      );
     });
   });
 });

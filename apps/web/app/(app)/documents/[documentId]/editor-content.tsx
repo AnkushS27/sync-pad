@@ -452,8 +452,8 @@ function EditorWorkspace({
 
       setSaveVersionOpen(false);
       setSaveLabel("");
-    } catch (err: any) {
-      alert(err.message || "An error occurred");
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsSavingVersion(false);
     }

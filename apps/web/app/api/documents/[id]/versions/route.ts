@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import * as YjsModule from "yjs";
-import { prisma, withRLS } from "@syncpad/db";
-
-const Y = (YjsModule as any).default || YjsModule;
+import * as Y from "yjs";
+import { withRLS } from "@syncpad/db";
 import { CreateVersionInput } from "@syncpad/shared";
 import { assertRole, ForbiddenError, requireUser, UnauthorizedError } from "@/lib/permissions";
 import { mutationRateLimit, readJsonWithLimit } from "@/lib/request-guard";
@@ -82,13 +80,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
 
       const snapshot = Buffer.from(doc.docState);
-      console.log(
-        "IN ROUTE - Y:",
-        typeof Y,
-        Y ? Object.keys(Y) : "null",
-        "Y.Doc:",
-        Y ? typeof Y.Doc : "undefined",
-      );
       const ydoc = new Y.Doc();
       Y.applyUpdate(ydoc, snapshot);
       const stateVector = Buffer.from(Y.encodeStateVector(ydoc));
