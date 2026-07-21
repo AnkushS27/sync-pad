@@ -71,4 +71,69 @@ const serwist = new Serwist({
   ],
 });
 
+serwist.setCatchHandler(async ({ request, url }) => {
+  // Handle API requests
+  if (url.pathname.startsWith("/api/")) {
+    return Response.error();
+  }
+
+  // Handle Next.js RSC prefetch/navigation requests (they have `_rsc` in query)
+  if (url.searchParams.has("_rsc")) {
+    return Response.error();
+  }
+
+  // Handle document/navigation requests (HTML pages)
+  if (request.destination === "document") {
+    return new Response(
+      `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline - SyncPad</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #09090b;
+      color: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+    h1 { font-size: 2rem; margin-bottom: 1rem; color: #f4f4f5; }
+    p { color: #a1a1aa; font-size: 1rem; max-width: 400px; line-height: 1.5; margin-bottom: 2rem; }
+    .btn {
+      background-color: #27272a;
+      color: #fafafa;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: 1px solid #3f3f46;
+      transition: background-color 0.2s;
+    }
+    .btn:hover { background-color: #3f3f46; }
+  </style>
+</head>
+<body>
+  <h1>You're Offline</h1>
+  <p>This page isn't cached yet. You can keep editing your other local-first documents from the dashboard.</p>
+  <a href="/documents" class="btn">Go to Dashboard</a>
+</body>
+</html>`,
+      {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      },
+    );
+  }
+
+  // Default fallback for assets or other requests
+  return Response.error();
+});
+
 serwist.addEventListeners();

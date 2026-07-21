@@ -370,8 +370,29 @@ function EditorPanel({ documentId, currentUser, role = "EDITOR" }: EditorContent
 
     provider.connect();
 
+    const handleOnline = () => {
+      console.log("[Sync] Browser back online. Connecting provider.");
+      provider.connect();
+    };
+
+    const handleOffline = () => {
+      console.log("[Sync] Browser offline. Disconnecting provider.");
+      provider.disconnect();
+      useConnectionState.getState().setStatus("offline");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    // Initial check in case we mounted while offline
+    if (!navigator.onLine) {
+      handleOffline();
+    }
+
     return () => {
       active = false;
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
       provider.destroy();
       LocalDocumentStore.closeDocument(documentId);
       resetConnectionState();

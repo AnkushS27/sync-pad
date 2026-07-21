@@ -166,7 +166,12 @@ export function createSyncProvider(
 
     onAuthenticationFailed: ({ reason }) => {
       console.error(`[SyncProvider] Authentication failed for ${documentId}: ${reason}`);
-      setError(`Authentication failed: ${reason}`);
+      const isBrowserOffline = typeof window !== "undefined" && !window.navigator.onLine;
+      if (isBrowserOffline) {
+        setStatus("offline");
+      } else {
+        setError(`Authentication failed: ${reason}`);
+      }
     },
 
     // Let Hocuspocus handle exponential back-off reconnects (it does so by
